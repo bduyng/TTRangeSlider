@@ -348,6 +348,11 @@ static const CGFloat kLabelsFontSize = 12.0f;
 }
 
 #pragma mark - Touch Tracking
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch {
+    return ![touch.view isKindOfClass:[UIControl class]];
+}
+
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
     //kill any gestures when we're tracking a touch that started on one of the handles. This ensures the correct behaviour when
     //the superview is something like a scrollview that can accepts touches in the same area as the slider thats placed on that view.
