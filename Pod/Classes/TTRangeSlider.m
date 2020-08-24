@@ -10,6 +10,8 @@ const float TEXT_HEIGHT = 14;
 
 @interface TTRangeSlider ()
 
+@property (nonatomic, assign) CGFloat beginTrackingLocationX;
+
 @property (nonatomic, strong) CALayer *sliderLine;
 @property (nonatomic, strong) CALayer *sliderLineBetweenHandles;
 
@@ -367,25 +369,42 @@ static const CGFloat kLabelsFontSize = 12.0f;
         //the touch was inside one of the handles so we're definitely going to start movign one of them. But the handles might be quite close to each other, so now we need to find out which handle the touch was closest too, and activate that one.
         float distanceFromLeftHandle = [self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.leftHandle.frame]];
         float distanceFromRightHandle =[self distanceBetweenPoint:gesturePressLocation andPoint:[self getCentreOfRect:self.rightHandle.frame]];
-
-        if (distanceFromLeftHandle < distanceFromRightHandle && self.disableRange == NO){
-            self.leftHandleSelected = YES;
-            [self animateHandle:self.leftHandle withSelection:YES];
-        } else {
-            if (self.selectedMaximum == self.maxValue && [self getCentreOfRect:self.leftHandle.frame].x == [self getCentreOfRect:self.rightHandle.frame].x) {
+        
+        if (self.disableRange == NO) {
+            if (distanceFromLeftHandle < distanceFromRightHandle){
                 self.leftHandleSelected = YES;
                 [self animateHandle:self.leftHandle withSelection:YES];
-            }
-            else {
+            } else if (distanceFromRightHandle < distanceFromLeftHandle){
                 self.rightHandleSelected = YES;
                 [self animateHandle:self.rightHandle withSelection:YES];
+            } else {
+                if (self.selectedMaximum == self.maxValue) {
+                    // max => selected left knob
+                    self.leftHandleSelected = YES;
+                    [self animateHandle:self.leftHandle withSelection:YES];
+                }
+                else if (self.selectedMinimum == self.minValue) {
+                    // min => selected right knob
+                    self.rightHandleSelected = YES;
+                    [self animateHandle:self.rightHandle withSelection:YES];
+                }
+                else {
+                    self.leftHandleSelected = YES;
+                    [self animateHandle:self.leftHandle withSelection:YES];
+                    self.rightHandleSelected = YES;
+                    [self animateHandle:self.rightHandle withSelection:YES];
+                }
             }
         }
-
+        else {
+            self.rightHandleSelected = YES;
+            [self animateHandle:self.rightHandle withSelection:YES];
+        }
         if ([self.delegate respondsToSelector:@selector(didStartTouchesInRangeSlider:)]){
             [self.delegate didStartTouchesInRangeSlider:self];
         }
 
+        _beginTrackingLocationX = gesturePressLocation.x;
         return YES;
     } else {
         return NO;
@@ -452,8 +471,19 @@ static const CGFloat kLabelsFontSize = 12.0f;
 
     //multiply that percentage by self.maxValue to get the new selected minimum value
     float selectedValue = percentage * (self.maxValue - self.minValue) + self.minValue;
-
-    if (self.leftHandleSelected)
+    if (self.leftHandleSelected && self.rightHandleSelected && self.selectedMinimum == self.selectedMaximum) {
+        if (_beginTrackingLocationX < location.x) {
+            self.leftHandleSelected = NO;
+            [self animateHandle:self.leftHandle withSelection:NO];
+            self.selectedMaximum = selectedValue;
+        }
+        else {
+            self.rightHandleSelected = NO;
+            [self animateHandle:self.rightHandle withSelection:NO];
+            self.selectedMinimum = selectedValue;
+        }
+    }
+    else if (self.leftHandleSelected)
     {
         if (selectedValue < self.selectedMaximum){
             self.selectedMinimum = selectedValue;
