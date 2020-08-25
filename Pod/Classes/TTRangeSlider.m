@@ -453,9 +453,7 @@ static const CGFloat kLabelsFontSize = 12.0f;
     [self updateAccessibilityElements];
 
     //update the delegate
-    if ([self.delegate respondsToSelector:@selector(rangeSlider:didChangeSelectedMinimumValue:andMaximumValue:)] &&
-        (self.leftHandleSelected || self.rightHandleSelected)){
-
+    if ((self.leftHandleSelected || self.rightHandleSelected)){
         [self.delegate rangeSlider:self didChangeSelectedMinimumValue:self.selectedMinimum andMaximumValue:self.selectedMaximum];
     }
 
